@@ -11,6 +11,7 @@ import { JwtPayload } from './interfaces/jwt.interface';
 import { LoginDto } from './dto/login.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { FilterOperator, FilterSuffix, PaginateQuery, paginate } from 'nestjs-paginate';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -78,7 +79,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
 
-    const { email, password } =loginDto;
+    const { email, password } = loginDto;
 
     const user = await this.userRepository.findOne({
       where: { email },
@@ -97,7 +98,7 @@ export class AuthService {
     }
   }
 
-  async googleLogin(req){
+  async googleLogin(req) {
     if (!req.user) {
       return { msg: 'No es un usuario de google' }
     }
@@ -109,9 +110,9 @@ export class AuthService {
     if (!user) {
       return this.create({
         email: req.user.email,
-        name: `${ req.user.firstName } ${ req.user.lastName }`,
+        name: `${req.user.firstName} ${req.user.lastName}`,
         password: uuidv4(),
-        username: `${ req.user.firstName.replace(/ /g, "-") }-${ req.user.lastName.replace(/ /g, "-") }-${ uuidv4() }`,
+        username: `${req.user.firstName.replace(/ /g, "-")}-${req.user.lastName.replace(/ /g, "-")}-${uuidv4()}`,
         avatar_url: req.user.picture,
         google_provider: true
       })
@@ -129,7 +130,7 @@ export class AuthService {
   async checkAuthStatus(user: User) {
     return {
       ...user,
-      tokenL: this.getJwtToken({ id: user.id})
+      tokenL: this.getJwtToken({ id: user.id })
     };
   }
 
@@ -146,7 +147,7 @@ export class AuthService {
         is_active: [FilterOperator.EQ, FilterSuffix.NOT]
       }
     })
-    
+
   }
 
   async findOne(id: string) {
@@ -160,24 +161,77 @@ export class AuthService {
         msg: 'El usuario no existe'
       }
     }
+    return user
+  }
 
-    return {
-      user
+  async updatePassword(updatePasswordDto: UpdatePasswordDto, user: User) {
+
+    if (!bcrypt.compareSync(updatePasswordDto.old_password, user.password))
+      throw new UnauthorizedException('Old password incorrect')
+
+    const newPass = bcrypt.hashSync(updatePasswordDto.new_password, 10);
+    const query = this.userRepository.createQueryBuilder()
+
+    try {
+
+      await query
+        .update(User)
+        .set({ password: newPass })
+        .where("id = :id", { id: user.id })
+        .execute()
+
+      return {
+        message: 'Password updated successful'
+      }
+    } catch (error) {
+      console.log(error)
+      this.handleErrors(error)
     }
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
+  async update(id: string, updateAuthDto: UpdateAuthDto) {
+    const query = this.userRepository.createQueryBuilder();
+    const user = await this.findOne(id);
+    if (user instanceof User) {
+      try {
+        await query
+        .update(User)
+        .set({
+          ...updateAuthDto
+        })
+        .where("id = :id", { id: user.id })
+        .execute()
+  
+        return {
+          message: 'Avatar updated successfully'
+        };
+      } catch (error) {
+        console.log(error)
+        this.handleErrors(error)
+      }
+    }
+
+    return user;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  async remove(id: string) {
+
+    const user = await this.findOne(id)
+
+    if (user instanceof User) {
+      user.is_active = false;
+      await this.userRepository.save(user)
+      return {
+        msg: 'Usuario eliminado satisfactoriamente'
+      }
+    }
+    return user
   }
 
-  private getJwtToken ( payload: JwtPayload ) {
-    const token = this.jwtService.sign( payload );
+  private getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
     return token;
-  } 
+  }
 
   private handleErrors(errors: any): never {
     if (errors.code === '23505') {

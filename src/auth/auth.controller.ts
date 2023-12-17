@@ -8,6 +8,9 @@ import { AuthGuard } from  '@nestjs/passport'
 import { Auth } from './decorators/auth.decorator';
 import { validRoles } from './interfaces/valid-roles.interface';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import { GetUser } from './decorators/get-user.decorator';
+import { User } from './entities/user.entity';
 
 
 
@@ -38,10 +41,19 @@ export class AuthController {
     return this.authService.googleLogin(req)
   }
 
-  @UseInterceptors(FileInterceptor('<name of file here - asdasd in your screenshot>'))
+  @UseInterceptors(FileInterceptor(''))
   @Post('login')
   login(@Body() loginDto: LoginDto){
     return this.authService.login(loginDto)
+  }
+
+  @UseInterceptors(FileInterceptor(''))
+  @Post('update-password')
+  @Auth()
+  updatePassword(
+    @Body() updatePasswordDto: UpdatePasswordDto,
+    @GetUser() user: User) {
+    return this.authService.updatePassword(updatePasswordDto, user)
   }
 
   @Get()
@@ -55,13 +67,14 @@ export class AuthController {
     return this.authService.findOne(id);
   }
 
+  @UseInterceptors(FileInterceptor(''))
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
+  update(@Param('id', new ParseUUIDPipe()) id: string, @Body() updateAuthDto: UpdateAuthDto) {
+    return this.authService.update(id, updateAuthDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  remove(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.authService.remove(id);
   }
 }
