@@ -25,7 +25,10 @@ export class Content {
 
     @ManyToOne(
         () => Card,
-        (card) => card.contents
+        (card) => card.contents,
+        {
+            onDelete: 'CASCADE'
+        }
     )    
     card: Card
 }
