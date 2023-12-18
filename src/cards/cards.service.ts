@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
 import { Content } from './entities/content.entity';
 import { FilterOperator, FilterSuffix, PaginateQuery, paginate } from 'nestjs-paginate';
+import { CreateContentDto } from './dto/create-content.dto';
 
 @Injectable()
 export class CardsService {
@@ -41,15 +42,23 @@ export class CardsService {
     return 'This action adds a new card';
   }
 
-  // async createContent(){
+  async createContent(createContentDto: CreateContentDto, user: User) {
+    const card = await this.findOne(createContentDto.card_id, user)
+    try {
+      const content = this.contentRepository.create({
+        ...createContentDto,
+        card: card.card
+      })
+      await this.contentRepository.save(content)
+      return {
+        msg: 'Contenido creado satisfactoriamente',
+        content
+      }
+    } catch (error) {
+      console.log(error);
+    }
 
-  //   try {
-  //     const con
-  //   } catch (error) {
-
-  //   }
-
-  // }
+  }
 
   async findAll(query: PaginateQuery, user: User) {
 
@@ -79,13 +88,8 @@ export class CardsService {
       })
       .getOne()
 
-    if (!card) {
-      return {
-        msg: 'Tarjeta no encontrada'
-      }
-    }
     return {
-     card
+      card
     }
 
   }
@@ -94,7 +98,39 @@ export class CardsService {
     return `This action updates a #${id} card`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} card`;
+  async remove(id: string, user: User) {
+    const query = this.cardsRepository.createQueryBuilder('cards')
+    const { card } = await this.findOne(id, user)
+
+    if (!card) {
+      throw new NotFoundException({ msg: `La tarjeta no existe` })
+    }
+    
+    try {
+      await query
+        .delete()
+        // .from(Card)
+        .where("id = :id and userId = :userId", {
+          id: card.id,
+          userId: user.id
+        })
+        .execute()
+
+      return {
+        msg: 'Tarjeta eliminada satisfactoriamente'
+      }
+
+    } catch (error) {
+      console.log(error);
+      this.handleErrors(error)
+    }
+
+  }
+
+  private handleErrors(errors: any): never {
+    if (errors.code === '23505') {
+      throw new BadRequestException(errors.detail)
+    }
+    throw new InternalServerErrorException(`Server internal error, please check server logs`)
   }
 }

@@ -67,7 +67,10 @@ export class Card {
 
     @OneToMany(
         () => Content,
-        (content) => content.card
+        (content) => content.card,
+        {
+            onDelete: 'CASCADE'
+        }
     )
     contents: Content[]
 }
