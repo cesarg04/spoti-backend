@@ -6,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './auth/entities/user.entity';
 import { CardsModule } from './cards/cards.module';
+import { Card } from './cards/entities/card.entity';
+import { Content } from './cards/entities/content.entity';
 
 
 @Module({
@@ -19,10 +21,11 @@ import { CardsModule } from './cards/cards.module';
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
       synchronize: true,
-      entities: [User]
+      entities: [User, Card, Content],
     }),
     AuthModule,
-    CardsModule],
+    CardsModule
+    ],
   controllers: [AppController],
   providers: [AppService],
 })

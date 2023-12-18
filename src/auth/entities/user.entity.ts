@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Card } from "src/cards/entities/card.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
 export class User {
@@ -84,6 +85,13 @@ export class User {
         default: ['user']
     })
     role: string[];
+
+    @OneToMany(
+        () => Card,
+        (card) => card.user
+    )
+
+    cards: Card[];
 
     @BeforeInsert()
     checkLowerInsert(){

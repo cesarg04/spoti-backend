@@ -8,6 +8,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { CardsModule } from 'src/cards/cards.module';
 
 @Module({
   controllers: [AuthController],
@@ -20,10 +21,10 @@ import { GoogleStrategy } from './strategies/google.strategy';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
-      })
+      }),
     }),
     ConfigModule
   ],
-  exports: [TypeOrmModule, AuthService, JWTStrategy, PassportModule, JwtModule]
+  exports: [TypeOrmModule, JWTStrategy, PassportModule, JwtModule]
 })
 export class AuthModule {}
