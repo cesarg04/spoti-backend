@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, UseInterceptors, Query, Put } from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
@@ -7,8 +7,9 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateContentDto } from './dto/create-content.dto';
+import { CreateContentDto, CreateContentQueryDto } from './dto/create-content.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateContentDto } from './dto/update-content.dto';
 
 @Controller('cards')
 export class CardsController {
@@ -35,12 +36,23 @@ export class CardsController {
 
   @UseInterceptors(FileInterceptor(''))
   @Auth()
+  @Patch('update-content/:id')
+  updateContent(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() updateContentDto: UpdateContentDto
+  ) {
+    return this.cardsService.updateContent(id, updateContentDto)
+  }
+
+  @UseInterceptors(FileInterceptor(''))
+  @Auth()
   @Post('create-content')
   createContent(
+    @Query() queries: CreateContentQueryDto,
     @Body() createContentDto: CreateContentDto,
     @GetUser() user: User
   ) {
-    return this.cardsService.createContent(createContentDto, user)
+    return this.cardsService.createContent(createContentDto, user, queries.card_id)
   }
 
   @Auth()
@@ -48,19 +60,24 @@ export class CardsController {
   findOne(
     @Param('id', new ParseUUIDPipe()) id: string,
     @GetUser() user: User) {
-    return this.cardsService.findOne(id, user);
+    return this.cardsService.findCard(id, user);
   }
 
+  @UseInterceptors(FileInterceptor(''))
+  @Auth()
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCardDto: UpdateCardDto) {
-    return this.cardsService.update(+id, updateCardDto);
+  update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() updateCardDto: UpdateCardDto,
+    @GetUser() user: User) {
+    return this.cardsService.update(id, updateCardDto, user);
   }
   @Auth()
   @Delete(':id')
   remove(
     @Param('id') id: string,
     @GetUser() user: User
-    ) {
+  ) {
     return this.cardsService.remove(id, user);
   }
 }
