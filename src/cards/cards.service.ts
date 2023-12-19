@@ -8,6 +8,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { Content } from './entities/content.entity';
 import { FilterOperator, FilterSuffix, PaginateQuery, paginate } from 'nestjs-paginate';
 import { CreateContentDto } from './dto/create-content.dto';
+import { UpdateContentDto } from './dto/update-content.dto';
 
 @Injectable()
 export class CardsService {
@@ -42,12 +43,12 @@ export class CardsService {
     return 'This action adds a new card';
   }
 
-  async createContent(createContentDto: CreateContentDto, user: User) {
-    const card = await this.findOne(createContentDto.card_id, user)
+  async createContent(createContentDto: CreateContentDto, user: User, cardId: string) {
+    const card = await this.findOne(cardId, user)
     try {
       const content = this.contentRepository.create({
         ...createContentDto,
-        card: card.card
+        card
       })
       await this.contentRepository.save(content)
       return {
@@ -57,7 +58,38 @@ export class CardsService {
     } catch (error) {
       console.log(error);
     }
+  }
 
+  async updateContent(id: string, updateContentDto: UpdateContentDto){
+    const content = await this.getContentById(id);
+    if (!content) {
+      throw new NotFoundException({ msg: 'Contenido no encontrado' })
+    }
+    const query = this.contentRepository.createQueryBuilder()
+    try {
+      query
+      .update(Content)
+      .set({
+        ...updateContentDto
+      })
+      .where("id = :id", { id })
+      .execute()
+
+      const updated = await this.getContentById(id);
+
+      return {
+        msg: 'Contenido actualizado satisfactoriamente',
+        content: updated
+      }
+
+    } catch (error) {
+      this.handleErrors(error) 
+    }
+  }
+
+  private async getContentById (id: string) {
+    const content = await this.contentRepository.findOneBy({ id })
+    return content
   }
 
   async findAll(query: PaginateQuery, user: User) {
@@ -79,7 +111,7 @@ export class CardsService {
 
   }
 
-  async findOne(id: string, user: User) {
+  private async findOne(id: string, user: User) {
     const card = await this.cardsRepository
       .createQueryBuilder()
       .where({
@@ -87,25 +119,55 @@ export class CardsService {
         id
       })
       .getOne()
-
-    return {
-      card
-    }
-
+    return card
   }
 
-  update(id: number, updateCardDto: UpdateCardDto) {
-    return `This action updates a #${id} card`;
+  async findCard(id: string, user: User) {
+    const card = await this.cardsRepository.findOne({
+      where: {
+        id
+      },
+      relations: {
+        contents: true
+      }
+    })
+    return card;
+  }
+
+  async update(id: string, updateCardDto: UpdateCardDto, user: User) {
+    if (Object.keys(updateCardDto).length <= 0) {
+      throw new BadRequestException({ msg: 'El formulario de edicion esta vacio' })
+    }
+    const query = this.cardsRepository.createQueryBuilder()
+    const card = await this.findOne(id, user)
+    if (card instanceof Card) {
+      try {
+        await query
+          .update(Card)
+          .set({
+            ...updateCardDto
+          })
+          .where("id = :id", { id: card.id })
+          .execute()
+        const updatedCard = await this.findOne(id, user)
+        return {
+          msg: 'Tarjeta actualizada satisfactoriamente',
+          card: updatedCard
+        }
+      } catch (error) {
+        console.log(error);
+        this.handleErrors(error)
+      }
+
+    }
   }
 
   async remove(id: string, user: User) {
     const query = this.cardsRepository.createQueryBuilder('cards')
-    const { card } = await this.findOne(id, user)
-
+    const card = await this.findOne(id, user)
     if (!card) {
       throw new NotFoundException({ msg: `La tarjeta no existe` })
     }
-    
     try {
       await query
         .delete()
@@ -115,16 +177,13 @@ export class CardsService {
           userId: user.id
         })
         .execute()
-
       return {
         msg: 'Tarjeta eliminada satisfactoriamente'
       }
-
     } catch (error) {
       console.log(error);
       this.handleErrors(error)
     }
-
   }
 
   private handleErrors(errors: any): never {

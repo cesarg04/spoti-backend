@@ -203,7 +203,8 @@ export class AuthService {
         .execute()
   
         return {
-          message: 'Avatar updated successfully'
+          msg: 'Avatar updated successfully',
+          user
         };
       } catch (error) {
         console.log(error)

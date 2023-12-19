@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, IsUUID } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
 
 export class CreateContentDto {
     @IsString()
@@ -13,7 +13,12 @@ export class CreateContentDto {
     @IsBoolean()
     @IsOptional()
     is_active?: boolean;
+}
 
-    @IsString()
+export class CreateContentQueryDto {
+    @IsNotEmpty()
+    @IsUUID()
     card_id: string;
 }
+
+
