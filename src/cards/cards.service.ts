@@ -60,6 +60,24 @@ export class CardsService {
     }
   }
 
+  async getContents (card_id: string, user: User){
+
+    const card = await this.findCard(card_id, user)
+
+    if (!card) {
+      throw new NotFoundException({ msg: 'Tarjeta no encontrada' })
+    }
+
+    const queryBuilder = this.contentRepository.createQueryBuilder()
+    
+    return await queryBuilder
+    .where({
+      card
+    })
+    .execute()
+    
+  }
+
   async updateContent(id: string, updateContentDto: UpdateContentDto){
     const content = await this.getContentById(id);
     if (!content) {
