@@ -9,6 +9,8 @@ import { CardsModule } from './cards/cards.module';
 import { Card } from './cards/entities/card.entity';
 import { Content } from './cards/entities/content.entity';
 import { FilesModule } from './files/files.module';
+import { ContactsModule } from './contacts/contacts.module';
+import { Contact } from './contacts/entities/contact.entity';
 
 
 @Module({
@@ -22,11 +24,12 @@ import { FilesModule } from './files/files.module';
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
       synchronize: true,
-      entities: [User, Card, Content],
+      entities: [User, Card, Content, Contact],
     }),
     AuthModule,
     CardsModule,
-    FilesModule
+    FilesModule,
+    ContactsModule
     ],
   controllers: [AppController],
   providers: [AppService],
