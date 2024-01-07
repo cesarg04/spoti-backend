@@ -56,6 +56,15 @@ export class CardsController {
   }
 
   @Auth()
+  @Get('get-contents')
+  getContents(
+    @Query() queries: CreateContentQueryDto,
+    @GetUser() user: User
+  ){
+    return this.cardsService.getContents(queries.card_id, user)
+  }
+
+  @Auth()
   @Get(':id')
   findOne(
     @Param('id', new ParseUUIDPipe()) id: string,

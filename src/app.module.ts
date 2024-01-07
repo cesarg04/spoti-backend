@@ -8,6 +8,7 @@ import { User } from './auth/entities/user.entity';
 import { CardsModule } from './cards/cards.module';
 import { Card } from './cards/entities/card.entity';
 import { Content } from './cards/entities/content.entity';
+import { FilesModule } from './files/files.module';
 
 
 @Module({
@@ -24,7 +25,8 @@ import { Content } from './cards/entities/content.entity';
       entities: [User, Card, Content],
     }),
     AuthModule,
-    CardsModule
+    CardsModule,
+    FilesModule
     ],
   controllers: [AppController],
   providers: [AppService],
