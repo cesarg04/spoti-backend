@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Card } from "src/cards/entities/card.entity";
+import { Contact } from "src/contacts/entities/contact.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
@@ -92,6 +93,15 @@ export class User {
     )
 
     cards: Card[];
+
+    @OneToMany(
+        () => Contact,
+        (contact) => contact.user,
+        {
+            onDelete: 'CASCADE'
+        }
+    )
+    contacts: Contact[]
 
     @BeforeInsert()
     checkLowerInsert(){

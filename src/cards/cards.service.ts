@@ -60,7 +60,7 @@ export class CardsService {
     }
   }
 
-  async getContents (card_id: string, user: User){
+  async getContents(card_id: string, user: User) {
 
     const card = await this.findCard(card_id, user)
 
@@ -69,16 +69,16 @@ export class CardsService {
     }
 
     const queryBuilder = this.contentRepository.createQueryBuilder()
-    
+
     return await queryBuilder
-    .where({
-      card
-    })
-    .execute()
-    
+      .where({
+        card
+      })
+      .execute()
+
   }
 
-  async updateContent(id: string, updateContentDto: UpdateContentDto){
+  async updateContent(id: string, updateContentDto: UpdateContentDto) {
     const content = await this.getContentById(id);
     if (!content) {
       throw new NotFoundException({ msg: 'Contenido no encontrado' })
@@ -86,12 +86,12 @@ export class CardsService {
     const query = this.contentRepository.createQueryBuilder()
     try {
       query
-      .update(Content)
-      .set({
-        ...updateContentDto
-      })
-      .where("id = :id", { id })
-      .execute()
+        .update(Content)
+        .set({
+          ...updateContentDto
+        })
+        .where("id = :id", { id })
+        .execute()
 
       const updated = await this.getContentById(id);
 
@@ -101,11 +101,11 @@ export class CardsService {
       }
 
     } catch (error) {
-      this.handleErrors(error) 
+      this.handleErrors(error)
     }
   }
 
-  private async getContentById (id: string) {
+  private async getContentById(id: string) {
     const content = await this.contentRepository.findOneBy({ id })
     return content
   }
